@@ -1,0 +1,13 @@
+Rule: react-doctor/rerender-lazy-state-init
+Severity: warning
+Category: Performance
+Count: 1
+
+useState(getState()) re-runs getState() on every render & throws the result away.
+
+Suggestion: Wrap expensive initial state in an arrow function so the initializer does not rerun and get thrown away on every render.
+
+Curl with no cache & follow the canonical fix and false positive check recipe before fixing: https://react.doctor/docs/rules/react-doctor/rerender-lazy-state-init
+
+Files:
+  src/hooks/useChess.js:10

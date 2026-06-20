@@ -1,0 +1,34 @@
+Rule: react-doctor/exhaustive-deps
+Severity: warning
+Category: Bugs
+Count: 4
+
+`useEffect` can run with a stale `reset, turn` & show your users old data.
+
+`useEffect` can run with a stale `state.history.length, state, options` & show your users old data.
+
+`useMemo` re-runs whenever `version` changes even though it never uses it.
+
+`useEffect` can run with a stale `chess.loadState` & show your users old data.
+
+Suggestion: Don't blindly add missing dependencies. Read the hook callback first.
+
+Bad:
+useEffect(() => {
+  setCount(count + 1);
+}, [count]);
+
+Better:
+useEffect(() => {
+  setCount((currentCount) => currentCount + 1);
+}, []);
+
+If the missing value is recreated every render, move it inside the hook or stabilize it before adding it to deps.
+
+Curl with no cache & follow the canonical fix and false positive check recipe before fixing: https://react.doctor/docs/rules/react-doctor/exhaustive-deps
+
+Files:
+  src/hooks/useClock.js:20
+  src/hooks/useGameAnalysis.js:52
+  src/pages/GameHistory.jsx:10
+  src/pages/PlayLocal.jsx:42

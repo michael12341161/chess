@@ -1,0 +1,13 @@
+Rule: react-doctor/client-localstorage-no-version
+Severity: warning
+Category: Bugs
+Count: 1
+
+sessionStorage.setItem("resume-game", JSON.stringify(...)) has no version, so changing the data shape later crashes your users' saved sessions. Add one to the key (e.g. "resume-game:v1").
+
+Suggestion: Put a version in the storage key (e.g. "myKey:v1"). If you change the data shape later, old saved data can be ignored instead of crashing the app.
+
+Curl with no cache & follow the canonical fix and false positive check recipe before fixing: https://react.doctor/docs/rules/react-doctor/client-localstorage-no-version
+
+Files:
+  src/pages/GameHistory.jsx:18

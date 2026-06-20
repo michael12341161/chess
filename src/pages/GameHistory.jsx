@@ -1,13 +1,14 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Play, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { STORAGE_KEYS } from '../utils/constants.js';
 import { deleteLocalGame, listLocalGames } from '../store/gameStore.js';
 
 export default function GameHistory() {
   const navigate = useNavigate();
   const [version, setVersion] = useState(0);
-  const games = useMemo(() => listLocalGames(), [version]);
+  const games = listLocalGames();
 
   const remove = (id) => {
     deleteLocalGame(id);
@@ -15,7 +16,7 @@ export default function GameHistory() {
   };
 
   const resume = (game) => {
-    sessionStorage.setItem('resume-game', JSON.stringify(game));
+    sessionStorage.setItem(STORAGE_KEYS.RESUME_GAME, JSON.stringify(game));
     toast.success('Resume ready');
     navigate('/play-local');
   };

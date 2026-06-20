@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useReducer } from 'react';
 import { getBestMove } from '../chess/ai/AlphaBeta.js';
 import { getDifficulty } from '../chess/ai/DifficultyManager.js';
 import { findMove, generateLegalMoves } from '../chess/engine/MoveGenerator.js';
@@ -10,41 +10,49 @@ function moveFromUci(state, uciMove) {
   return findMove(state, uciMove.slice(0, 2), uciMove.slice(2, 4), uciMove[4]);
 }
 
+function engineReducer(state, action) {
+  switch (action.type) {
+    case 'dispose':
+      if (state.engine && state.engine !== action.skipEngine) state.engine.dispose();
+      return { engine: null, ready: false };
+    case 'init':
+      return { ...state, engine: action.engine, ready: false };
+    case 'ready':
+      return { ...state, ready: true };
+    case 'failed':
+      if (state.engine === action.engine) action.engine.dispose();
+      return { engine: null, ready: false };
+    default:
+      return state;
+  }
+}
+
 export function useAI(difficultyName = 'casual') {
   const difficulty = getDifficulty(difficultyName);
-  const engineRef = useRef(null);
-  const [engineReady, setEngineReady] = useState(false);
+  const [engineState, dispatch] = useReducer(engineReducer, { engine: null, ready: false });
 
   useEffect(() => {
     let cancelled = false;
-    setEngineReady(false);
 
     if (!difficulty.stockfish || !stockfishAvailable()) {
-      if (engineRef.current) {
-        engineRef.current.dispose();
-        engineRef.current = null;
-      }
+      dispatch({ type: 'dispose', skipEngine: null });
       return undefined;
     }
 
     const engine = new StockfishEngine({ timeoutMs: Math.max(3500, difficulty.movetime + 2500) });
-    engineRef.current = engine;
+    dispatch({ type: 'init', engine });
     engine.init()
       .then(() => {
-        if (!cancelled) setEngineReady(true);
+        if (!cancelled) dispatch({ type: 'ready' });
       })
       .catch(() => {
-        if (!cancelled) {
-          engine.dispose();
-          if (engineRef.current === engine) engineRef.current = null;
-          setEngineReady(false);
-        }
+        if (!cancelled) dispatch({ type: 'failed', engine });
       });
 
     return () => {
       cancelled = true;
+      dispatch({ type: 'dispose', skipEngine: engine });
       engine.dispose();
-      if (engineRef.current === engine) engineRef.current = null;
     };
   }, [difficulty.stockfish, difficulty.movetime]);
 
@@ -57,9 +65,9 @@ export function useAI(difficultyName = 'casual') {
         return legalMoves[Math.floor(Math.random() * legalMoves.length)];
       }
 
-      if (difficulty.stockfish && engineReady && engineRef.current) {
+      if (difficulty.stockfish && engineState.ready && engineState.engine) {
         try {
-          const result = await engineRef.current.analyzeFen(stateToFen(state), { movetime: difficulty.movetime });
+          const result = await engineState.engine.analyzeFen(stateToFen(state), { movetime: difficulty.movetime });
           const stockfishMove = moveFromUci(state, result.bestMove);
           if (stockfishMove) return stockfishMove;
         } catch {
@@ -69,15 +77,15 @@ export function useAI(difficultyName = 'casual') {
 
       return getBestMove(state, difficulty.depth, state.turn);
     },
-    [difficultyName, engineReady],
+    [difficultyName, engineState.engine, engineState.ready],
   );
 
   return {
     chooseMove,
     difficulty: {
       ...difficulty,
-      engineReady: !difficulty.stockfish || engineReady,
-      engineName: difficulty.stockfish && engineReady ? 'Stockfish 18 Lite' : 'Built-in tactical engine',
+      engineReady: !difficulty.stockfish || engineState.ready,
+      engineName: difficulty.stockfish && engineState.ready ? 'Stockfish 18 Lite' : 'Built-in tactical engine',
     },
   };
 }

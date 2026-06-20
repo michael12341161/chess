@@ -1,7 +1,7 @@
 import { PIECE_VALUES } from '../../utils/constants.js';
 
 export function orderMoves(moves) {
-  return [...moves].sort((a, b) => moveScore(b) - moveScore(a));
+  return moves.toSorted((a, b) => moveScore(b) - moveScore(a));
 }
 
 function moveScore(move) {

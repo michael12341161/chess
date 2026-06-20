@@ -1,0 +1,13 @@
+Rule: react-doctor/no-chain-state-updates
+Severity: warning
+Category: Bugs
+Count: 1
+
+Chaining state updates triggers an extra render each step.
+
+Suggestion: Set all the related state together in the event handler that starts it, instead of having one useEffect react to a state change and set more state. See https://react.dev/learn/you-might-not-need-an-effect#chains-of-computations
+
+Curl with no cache & follow the canonical fix and false positive check recipe before fixing: https://react.doctor/docs/rules/react-doctor/no-chain-state-updates
+
+Files:
+  src/hooks/useClock.js:28

@@ -1,4 +1,6 @@
-export default function MoveHistory({ moves = [] }) {
+const EMPTY_MOVES = [];
+
+export default function MoveHistory({ moves = EMPTY_MOVES }) {
   const rows = [];
   for (let index = 0; index < moves.length; index += 2) {
     rows.push({

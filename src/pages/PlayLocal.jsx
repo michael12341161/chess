@@ -12,7 +12,7 @@ import { useChess } from '../hooks/useChess.js';
 import { useClock } from '../hooks/useClock.js';
 import { useSettingsStore } from '../store/settingsStore.js';
 import { saveLocalGame } from '../store/gameStore.js';
-import { WHITE } from '../utils/constants.js';
+import { STORAGE_KEYS, WHITE } from '../utils/constants.js';
 import { getElapsedSeconds } from '../utils/gameSummary.js';
 
 export default function PlayLocal() {
@@ -32,14 +32,15 @@ export default function PlayLocal() {
   };
 
   useEffect(() => {
-    const raw = sessionStorage.getItem('resume-game');
+    const raw = sessionStorage.getItem(STORAGE_KEYS.RESUME_GAME) ?? sessionStorage.getItem('resume-game');
     if (raw) {
       const saved = JSON.parse(raw);
       chess.loadState(saved.state);
+      sessionStorage.removeItem(STORAGE_KEYS.RESUME_GAME);
       sessionStorage.removeItem('resume-game');
       toast.success('Game resumed');
     }
-  }, []);
+  }, [chess.loadState]);
 
   const save = () => {
     saveLocalGame(chess.state, { mode: 'local', fen: chess.fen, pgn: chess.pgn, title: 'Local match' });

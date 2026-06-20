@@ -52,7 +52,7 @@ export default function Home() {
           </Link>
           <Link className="action-link" to="/challenge-friend">
             <Handshake size={20} />
-            <span>Challenge Friend</span>
+            <span>Online Challenges</span>
           </Link>
         </section>
         <MoveHistory moves={chess.state.history} />

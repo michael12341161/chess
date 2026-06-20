@@ -1,0 +1,18 @@
+Rule: react-doctor/prefer-tag-over-role
+Severity: warning
+Category: Accessibility
+Count: 4
+
+Screen reader users get more reliable semantics from `<dialog>` than `role="dialog"`, so use `<dialog>` instead.
+
+Screen reader users get more reliable semantics from `<address>` than `role="group"`, so use `<address>` instead.
+
+Suggestion: Use the matching HTML element when one exists so browsers and assistive tech get native semantics.
+
+Curl with no cache & follow the canonical fix and false positive check recipe before fixing: https://react.doctor/docs/rules/react-doctor/prefer-tag-over-role
+
+Files:
+  src/components/EndgameModal.jsx:41
+  src/components/PromotionModal.jsx:63
+  src/components/PromotionModal.jsx:67
+  src/components/SettingsModal.jsx:10

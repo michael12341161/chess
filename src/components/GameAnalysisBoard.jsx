@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import ChessBoard from './ChessBoard.jsx';
 import { createGameState } from '../chess/engine/StateManager.js';
 import { useGameAnalysis } from '../hooks/useGameAnalysis.js';
@@ -29,23 +29,13 @@ function clampReviewIndex(index, total) {
 }
 
 export default function GameAnalysisBoard({ state }) {
-  const [reviewIndex, setReviewIndex] = useState(0);
+  const [manualReviewIndex, setManualReviewIndex] = useState(null);
   const analysis = useGameAnalysis(state?.result ? state : null, {
     preferStockfish: true,
     movetime: 220,
     depth: 4,
     limit: 120,
   });
-
-  useEffect(() => {
-    setReviewIndex(0);
-  }, [state]);
-
-  useEffect(() => {
-    if (analysis.status !== 'ready' || !analysis.report?.moves?.length) return;
-    const firstMistakeIndex = analysis.report.moves.findIndex((move) => isTeachingMove(move));
-    setReviewIndex(firstMistakeIndex >= 0 ? firstMistakeIndex : analysis.report.moves.length - 1);
-  }, [analysis.status, analysis.report]);
 
   if (!state?.result) {
     return (
@@ -56,6 +46,9 @@ export default function GameAnalysisBoard({ state }) {
   }
 
   const analyzedMoves = analysis.report?.moves ?? [];
+  const firstMistakeIndex = analyzedMoves.findIndex((move) => isTeachingMove(move));
+  const fallbackReviewIndex = firstMistakeIndex >= 0 ? firstMistakeIndex : analyzedMoves.length - 1;
+  const reviewIndex = manualReviewIndex === null ? fallbackReviewIndex : clampReviewIndex(manualReviewIndex, analyzedMoves.length);
   const safeReviewIndex = clampReviewIndex(reviewIndex, analyzedMoves.length);
   const reviewedMove = analyzedMoves[safeReviewIndex] ?? null;
   const reviewedHistoryMove = reviewedMove ? state.history[reviewedMove.ply - 1] : null;
@@ -123,11 +116,11 @@ export default function GameAnalysisBoard({ state }) {
 
               <div className="review-panel">
                 <div className="review-controls">
-                  <button type="button" className="review-nav-button" onClick={() => setReviewIndex((value) => clampReviewIndex(value - 1, analyzedMoves.length))}>
+                    <button type="button" className="review-nav-button" onClick={() => setManualReviewIndex((value) => (value === null ? fallbackReviewIndex - 1 : clampReviewIndex(value - 1, analyzedMoves.length)))}>
                     PREV
                   </button>
                   <span>{safeReviewIndex + 1}/{analyzedMoves.length}</span>
-                  <button type="button" className="review-nav-button" onClick={() => setReviewIndex((value) => clampReviewIndex(value + 1, analyzedMoves.length))}>
+                    <button type="button" className="review-nav-button" onClick={() => setManualReviewIndex((value) => clampReviewIndex(value === null ? fallbackReviewIndex + 1 : value + 1, analyzedMoves.length))}>
                     NEXT
                   </button>
                 </div>
@@ -148,7 +141,7 @@ export default function GameAnalysisBoard({ state }) {
           <div className="critical-list">
             {criticalMoments.length ? (
               criticalMoments.map((move) => (
-                <button type="button" className="critical-row" key={`${move.ply}-${move.uci}`} onClick={() => setReviewIndex(move.ply - 1)}>
+                  <button type="button" className="critical-row" key={`${move.ply}-${move.uci}`} onClick={() => setManualReviewIndex(move.ply - 1)}>
                   <span>{move.moveNumber}. {move.san}</span>
                   <strong>{move.classification}</strong>
                   <small>{move.bestMove ? `Best: ${move.bestMove}` : 'Engine line held'}</small>

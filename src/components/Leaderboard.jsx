@@ -1,6 +1,8 @@
 import { formatRankingPoints, getRankTitle } from '../utils/ranking.js';
 
-export default function Leaderboard({ rows = [], loading = false }) {
+const EMPTY_ROWS = [];
+
+export default function Leaderboard({ rows = EMPTY_ROWS, loading = false }) {
   return (
     <section className="panel leaderboard-panel">
       <div className="panel-heading">

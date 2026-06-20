@@ -3,7 +3,7 @@ import { validatePassword } from '../../utils/passwordSecurity.js';
 
 const notConfigured = { data: null, error: new Error('Supabase credentials are missing.') };
 
-export async function register({ email, password, username }) {
+export async function register({ email, password, username, full_name }) {
   if (!supabase) return notConfigured;
   const passwordCheck = validatePassword(password);
   if (!passwordCheck.valid) return { data: null, error: new Error(passwordCheck.message) };
@@ -12,7 +12,7 @@ export async function register({ email, password, username }) {
     email,
     password,
     options: {
-      data: { username },
+      data: { username, full_name: full_name ?? username },
       emailRedirectTo: `${window.location.origin}/settings`,
     },
   });

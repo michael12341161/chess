@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useReducer } from 'react';
 import { analyzeCompletedGame } from '../services/analysis/gameAnalysis.js';
 
 const initialState = {
@@ -8,48 +8,64 @@ const initialState = {
   progress: { done: 0, total: 0 },
 };
 
+function analysisReducer(state, action) {
+  switch (action.type) {
+    case 'idle':
+      return initialState;
+    case 'analyzing':
+      return { status: 'analyzing', report: null, error: null, progress: { done: 0, total: action.total } };
+    case 'progress':
+      return { ...state, progress: action.progress };
+    case 'ready':
+      return {
+        status: 'ready',
+        report: action.report,
+        error: null,
+        progress: { done: action.report?.analyzedPlyCount ?? 0, total: action.report?.totalPlyCount ?? 0 },
+      };
+    case 'error':
+      return { status: 'error', report: null, error: action.error, progress: { done: 0, total: action.total } };
+    default:
+      return state;
+  }
+}
+
 export function useGameAnalysis(state, options = {}) {
-  const [analysis, setAnalysis] = useState(initialState);
-  const key = useMemo(() => {
-    if (!state?.result) return null;
-    return `${state.result}:${state.resultReason ?? ''}:${state.history.length}`;
-  }, [state]);
-  const activeKeyRef = useRef(null);
+  const [analysis, dispatch] = useReducer(analysisReducer, initialState);
+  const key = state?.result ? `${state.result}:${state.resultReason ?? ''}:${state.history.length}` : null;
+  const analysisOptions = useMemo(() => ({
+    preferStockfish: options.preferStockfish ?? true,
+    movetime: options.movetime ?? 90,
+    depth: options.depth ?? 2,
+    limit: options.limit,
+  }), [options.depth, options.limit, options.movetime, options.preferStockfish]);
 
   useEffect(() => {
     if (!key) {
-      activeKeyRef.current = null;
-      setAnalysis(initialState);
+      dispatch({ type: 'idle' });
       return undefined;
     }
 
     let cancelled = false;
-    activeKeyRef.current = key;
-    setAnalysis({ status: 'analyzing', report: null, error: null, progress: { done: 0, total: state.history.length } });
+    dispatch({ type: 'analyzing', total: state.history.length });
 
     analyzeCompletedGame(state, {
-      ...options,
+      ...analysisOptions,
       onProgress: (progress) => {
-        if (!cancelled) {
-          setAnalysis((current) => ({ ...current, progress }));
-        }
+        if (!cancelled) dispatch({ type: 'progress', progress });
       },
     })
       .then((report) => {
-        if (!cancelled && activeKeyRef.current === key) {
-          setAnalysis({ status: 'ready', report, error: null, progress: { done: report?.analyzedPlyCount ?? 0, total: report?.totalPlyCount ?? 0 } });
-        }
+        if (!cancelled) dispatch({ type: 'ready', report });
       })
       .catch((error) => {
-        if (!cancelled && activeKeyRef.current === key) {
-          setAnalysis({ status: 'error', report: null, error, progress: { done: 0, total: state.history.length } });
-        }
+        if (!cancelled) dispatch({ type: 'error', error, total: state.history.length });
       });
 
     return () => {
       cancelled = true;
     };
-  }, [key]);
+  }, [analysisOptions, key, state]);
 
   return analysis;
 }

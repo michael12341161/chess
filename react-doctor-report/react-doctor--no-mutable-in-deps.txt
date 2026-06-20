@@ -1,0 +1,13 @@
+Rule: react-doctor/no-mutable-in-deps
+Severity: error
+Category: Bugs
+Count: 1
+
+Values like "location.*" can change without re-rendering the component, so this dependency will not make the effect run again.
+
+Suggestion: Read mutable values like `location.pathname` or `ref.current` inside the effect body, or subscribe with `useSyncExternalStore`. Changing them doesn't redraw the screen, so listing them in deps won't make the effect run again.
+
+Curl with no cache & follow the canonical fix and false positive check recipe before fixing: https://react.doctor/docs/rules/react-doctor/no-mutable-in-deps
+
+Files:
+  src/pages/GameAnalysis.jsx:32

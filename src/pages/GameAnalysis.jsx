@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, History } from 'lucide-react';
 import GameAnalysisBoard from '../components/GameAnalysisBoard.jsx';
@@ -29,7 +28,7 @@ function readAnalysisGame(locationState) {
 export default function GameAnalysis() {
   const location = useLocation();
   const navigate = useNavigate();
-  const analysisGame = useMemo(() => readAnalysisGame(location.state), [location.state]);
+  const analysisGame = readAnalysisGame(location.state);
   const state = analysisGame?.state ?? null;
   const durationSeconds = analysisGame?.durationSeconds ?? 0;
   const winnerColor = state ? getWinnerColor(state) : null;
@@ -74,7 +73,7 @@ export default function GameAnalysis() {
       </section>
 
       {state ? (
-        <GameAnalysisBoard state={state} />
+        <GameAnalysisBoard key={state.history.at(-1)?.fen ?? state.result} state={state} />
       ) : (
         <section className="panel full-panel">
           <p className="muted">Finish a game, then choose Analysis Board from the result dialog.</p>

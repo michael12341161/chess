@@ -1,15 +1,19 @@
 export const PASSWORD_MIN_LENGTH = 12;
 
-export function getPasswordIssues(password = '') {
-  const checks = [
-    { valid: password.length >= PASSWORD_MIN_LENGTH, message: `at least ${PASSWORD_MIN_LENGTH} characters` },
-    { valid: /[a-z]/.test(password), message: 'a lowercase letter' },
-    { valid: /[A-Z]/.test(password), message: 'an uppercase letter' },
-    { valid: /\d/.test(password), message: 'a number' },
-    { valid: /[^A-Za-z0-9]/.test(password), message: 'a symbol' },
-  ];
+const PASSWORD_CHECKS = [
+  { valid: (password) => password.length >= PASSWORD_MIN_LENGTH, message: `at least ${PASSWORD_MIN_LENGTH} characters` },
+  { valid: (password) => /[a-z]/.test(password), message: 'a lowercase letter' },
+  { valid: (password) => /[A-Z]/.test(password), message: 'an uppercase letter' },
+  { valid: (password) => /\d/.test(password), message: 'a number' },
+  { valid: (password) => /[^A-Za-z0-9]/.test(password), message: 'a symbol' },
+];
 
-  return checks.filter((check) => !check.valid).map((check) => check.message);
+export function getPasswordIssues(password = '') {
+  const issues = [];
+  for (const check of PASSWORD_CHECKS) {
+    if (!check.valid(password)) issues.push(check.message);
+  }
+  return issues;
 }
 
 export function validatePassword(password = '') {

@@ -1,0 +1,16 @@
+Rule: react-doctor/prefer-useReducer
+Severity: warning
+Category: Bugs
+Count: 2
+
+6 useState calls in "ChallengeFriend" can each trigger a separate render.
+
+5 useState calls in "PlayFriend" can each trigger a separate render.
+
+Suggestion: Group related state in `useReducer` so one logical update does not fan out into separate renders.
+
+Curl with no cache & follow the canonical fix and false positive check recipe before fixing: https://react.doctor/docs/rules/react-doctor/prefer-useReducer
+
+Files:
+  src/pages/ChallengeFriend.jsx:220
+  src/pages/PlayFriend.jsx:34

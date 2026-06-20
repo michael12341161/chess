@@ -1,11 +1,17 @@
 import { supabase } from './client.js';
-import { findProfileByUsername, listProfilesByIds } from './profiles.js';
+import { listProfilesByIds } from './profiles.js';
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function requireConfigured() {
   if (!supabase) {
     return new Error('Supabase credentials are missing.');
   }
   return null;
+}
+
+function isUuid(value) {
+  return UUID_PATTERN.test(String(value ?? ''));
 }
 
 function attachProfiles(challenges, profiles) {
@@ -17,30 +23,32 @@ function attachProfiles(challenges, profiles) {
   }));
 }
 
-export async function createFriendChallenge({ challengerId, opponentUsername, colorPreference = 'random' }) {
+export async function createFriendChallenge({ opponentUsername, colorPreference = 'random' }) {
   const configError = requireConfigured();
   if (configError) return { data: null, error: configError };
-  if (!challengerId) return { data: null, error: new Error('Login is required to challenge a friend.') };
+  if (!opponentUsername?.trim()) return { data: null, error: new Error('Enter a username to challenge.') };
 
-  const { data: opponent, error: profileError } = await findProfileByUsername(opponentUsername);
-  if (profileError) return { data: null, error: profileError };
-  if (!opponent) return { data: null, error: new Error('No player found with that username.') };
-  if (opponent.id === challengerId) return { data: null, error: new Error('Choose another player to challenge.') };
+  return supabase.rpc('create_friend_challenge_by_username', {
+    target_opponent_username: opponentUsername,
+    target_color_preference: colorPreference,
+  });
+}
 
-  return supabase
-    .from('friend_challenges')
-    .insert({
-      challenger_id: challengerId,
-      opponent_id: opponent.id,
-      color_preference: colorPreference,
-      status: 'pending',
-    })
-    .select('*')
-    .single();
+export async function createOnlinePlayerChallenge({ opponentId, colorPreference = 'random' }) {
+  const configError = requireConfigured();
+  if (configError) return { data: null, error: configError };
+  if (!opponentId) return { data: null, error: new Error('Choose an online player to challenge.') };
+  if (!isUuid(opponentId)) return { data: null, error: new Error('Choose a valid online player to challenge.') };
+
+  return supabase.rpc('create_online_player_challenge', {
+    target_opponent_id: opponentId,
+    target_color_preference: colorPreference,
+  });
 }
 
 export async function listFriendChallenges(userId) {
   if (!supabase || !userId) return { data: [], error: null };
+  if (!isUuid(userId)) return { data: [], error: null };
 
   const { data: challenges, error } = await supabase
     .from('friend_challenges')
@@ -66,19 +74,15 @@ export async function acceptFriendChallenge(challengeId) {
 export async function updateFriendChallengeStatus(challengeId, status) {
   const configError = requireConfigured();
   if (configError) return { data: null, error: configError };
-  return supabase
-    .from('friend_challenges')
-    .update({
-      status,
-      responded_at: ['declined', 'canceled'].includes(status) ? new Date().toISOString() : null,
-    })
-    .eq('id', challengeId)
-    .select('*')
-    .single();
+  return supabase.rpc('set_friend_challenge_status', {
+    target_challenge_id: challengeId,
+    target_status: status,
+  });
 }
 
 export function subscribeToFriendChallenges(userId, onChange) {
   if (!supabase || !userId) return { unsubscribe: () => {} };
+  if (!isUuid(userId)) return { unsubscribe: () => {} };
   const channel = supabase
     .channel(`friend-challenges:${userId}`)
     .on(

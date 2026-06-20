@@ -1,0 +1,29 @@
+Rule: react-doctor/no-derived-state
+Severity: warning
+Category: Bugs
+Count: 7
+
+Storing "mode" in state when you can derive it from other values costs an extra render.
+
+Storing "reviewIndex" in state when you can derive it from other values costs an extra render.
+
+Storing "times" in state when you can derive it from other values costs an extra render.
+
+Storing "lastTurn" in state when you can derive it from other values costs an extra render.
+
+Storing "game" in state when you can derive it from other values costs an extra render.
+
+"loading" is only set here from other values, so storing it costs an extra render.
+
+Suggestion: Work out the value while rendering (or with useMemo if it's expensive) instead of copying it into useState through a useEffect. See https://react.dev/learn/you-might-not-need-an-effect#updating-state-based-on-props-or-state
+
+Curl with no cache & follow the canonical fix and false positive check recipe before fixing: https://react.doctor/docs/rules/react-doctor/no-derived-state
+
+Files:
+  src/components/AuthForm.jsx:12
+  src/components/GameAnalysisBoard.jsx:47
+  src/hooks/useClock.js:19
+  src/hooks/useClock.js:24
+  src/hooks/useClock.js:28
+  src/pages/PlayFriend.jsx:187
+  src/store/leaderboardStore.js:33

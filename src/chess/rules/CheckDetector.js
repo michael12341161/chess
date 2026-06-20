@@ -7,13 +7,14 @@ import { PIECES, WHITE } from '../../utils/constants.js';
 import { findKing, getPiece, isInsideBoard, squareToCoords } from '../../utils/helpers.js';
 
 function hasAttackingSlider(board, row, col, attackerColor, directions, allowedTypes) {
+  const allowedTypeSet = new Set(allowedTypes);
   return directions.some(([dr, dc]) => {
     let r = row + dr;
     let c = col + dc;
     while (isInsideBoard(r, c)) {
       const piece = board[r][c];
       if (piece) {
-        return piece.color === attackerColor && allowedTypes.includes(piece.type);
+        return piece.color === attackerColor && allowedTypeSet.has(piece.type);
       }
       r += dr;
       c += dc;

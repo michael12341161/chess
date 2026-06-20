@@ -1,23 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import ChessPiece from './ChessPiece.jsx';
 import { PIECE_NAMES, PROMOTION_PIECES, WHITE } from '../utils/constants.js';
 
 export default function PromotionModal({ color = WHITE, open, onSelect }) {
   const [selected, setSelected] = useState(null);
   const optionRefs = useRef([]);
-
-  useEffect(() => {
-    if (!open) {
-      setSelected(null);
-      return undefined;
-    }
-
-    const frameId = window.requestAnimationFrame(() => {
-      optionRefs.current[0]?.focus();
-    });
-
-    return () => window.cancelAnimationFrame(frameId);
-  }, [open]);
 
   if (!open) return null;
 
@@ -59,12 +46,12 @@ export default function PromotionModal({ color = WHITE, open, onSelect }) {
   };
 
   return (
-    <div className="modal-backdrop promotion-backdrop" role="presentation">
-      <div className="modal compact-modal promotion-modal" role="dialog" aria-modal="true" aria-labelledby="promotion-title">
+    <dialog open className="modal-backdrop promotion-backdrop" aria-labelledby="promotion-title">
+      <div className="modal compact-modal promotion-modal">
         <div className="promotion-heading">
           <h2 id="promotion-title">Choose a Piece for Promotion</h2>
         </div>
-        <div className="promotion-grid" role="group" aria-labelledby="promotion-title">
+        <div className="promotion-grid" aria-labelledby="promotion-title">
           {PROMOTION_PIECES.map((type, index) => (
             <button
               type="button"
@@ -79,6 +66,7 @@ export default function PromotionModal({ color = WHITE, open, onSelect }) {
               aria-label={`Promote to ${PIECE_NAMES[type]}`}
               aria-pressed={selected === type}
               title={`Promote to ${PIECE_NAMES[type]}`}
+              autoFocus={index === 0}
             >
               <span className="promotion-piece-frame" aria-hidden="true">
                 <ChessPiece piece={{ type, color }} />
@@ -87,6 +75,6 @@ export default function PromotionModal({ color = WHITE, open, onSelect }) {
           ))}
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }

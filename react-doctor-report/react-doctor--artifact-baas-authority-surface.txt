@@ -1,0 +1,13 @@
+Rule: react-doctor/artifact-baas-authority-surface
+Severity: warning
+Category: Security
+Count: 1
+
+A browser artifact exposes Firebase/Supabase config together with sensitive collections or authorization fields.
+
+Suggestion: Client BaaS config is often public, but shipped collection names plus owner, role, tenant, or admin fields give attackers a precise authorization map. Verify rules/RLS enforce every boundary server-side.
+
+Curl with no cache & follow the canonical fix and false positive check recipe before fixing: https://react.doctor/docs/rules/react-doctor/artifact-baas-authority-surface
+
+Files:
+  build/static/js/main.640c15d6.js.map:1

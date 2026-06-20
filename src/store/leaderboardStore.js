@@ -1,4 +1,4 @@
-import { createContext, createElement, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, createElement, useCallback, use, useEffect, useMemo, useState } from 'react';
 import { fetchLeaderboard } from '../services/supabase/leaderboard.js';
 import { STORAGE_KEYS } from '../utils/constants.js';
 
@@ -38,7 +38,7 @@ export function LeaderboardProvider({ children }) {
 }
 
 export function useLeaderboardStore() {
-  const context = useContext(LeaderboardContext);
+  const context = use(LeaderboardContext);
   if (!context) throw new Error('useLeaderboardStore must be used inside LeaderboardProvider.');
   return context;
 }

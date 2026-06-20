@@ -106,6 +106,7 @@ export const STORAGE_KEYS = {
   SETTINGS: 'chess-platform-settings',
   SAVED_GAMES: 'chess-platform-saved-games',
   ANALYSIS_GAME: 'chess-platform-analysis-game',
+  RESUME_GAME: 'chess-platform-resume-game:v1',
   PROFILE: 'chess-platform-profile',
   LOCAL_ACCOUNTS: 'chess-platform-local-accounts',
   LEADERBOARD: 'chess-platform-leaderboard',

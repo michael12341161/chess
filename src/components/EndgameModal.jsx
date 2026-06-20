@@ -35,11 +35,9 @@ export default function EndgameModal({
   };
 
   return (
-    <div className="modal-backdrop result-backdrop" role="presentation">
+    <dialog open className="modal-backdrop result-backdrop">
       <div
         className={`result-card ${winnerColor ? 'decisive-result' : 'draw-result'}`}
-        role="dialog"
-        aria-modal="true"
         aria-label="Game result"
       >
         <header className="result-header">
@@ -74,6 +72,6 @@ export default function EndgameModal({
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }

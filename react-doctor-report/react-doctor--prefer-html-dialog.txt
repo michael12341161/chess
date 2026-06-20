@@ -1,0 +1,16 @@
+Rule: react-doctor/prefer-html-dialog
+Severity: warning
+Category: Accessibility
+Count: 4
+
+Keyboard users can tab out of this `role="dialog"` modal because it has no built-in focus trapping, so use the native `<dialog>`, which gives you focus trapping, `Escape` to close, and the backdrop for free.
+
+Suggestion: Replace the wrapper with `<dialog>` and open it with `dialog.showModal()`. For the trigger, prefer `<button commandfor="id" command="show-modal">` (Chrome 135+), or a `useRef` with `dialogRef.current?.showModal()`.
+
+Curl with no cache & follow the canonical fix and false positive check recipe before fixing: https://react.doctor/docs/rules/react-doctor/prefer-html-dialog
+
+Files:
+  src/components/AuthModal.jsx:23
+  src/components/EndgameModal.jsx:41
+  src/components/PromotionModal.jsx:63
+  src/components/SettingsModal.jsx:10

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Flag, Handshake, RefreshCw, RotateCcw, Settings } from 'lucide-react';
@@ -31,23 +31,44 @@ function profileRank(profile) {
   return `${profile.rank_title ?? getRankTitle(profile.ranking_points)} ${formatRankingPoints(profile.ranking_points)}`;
 }
 
+const initialFriendMatchState = {
+  settingsOpen: false,
+  game: null,
+  profiles: {},
+  loading: true,
+  saving: false,
+};
+
+function friendMatchStateReducer(state, action) {
+  switch (action.type) {
+    case 'set-settings-open':
+      return { ...state, settingsOpen: action.open };
+    case 'set-game':
+      return { ...state, game: action.game };
+    case 'set-profiles':
+      return { ...state, profiles: action.profiles };
+    case 'set-loading':
+      return { ...state, loading: action.loading };
+    case 'set-saving':
+      return { ...state, saving: action.saving };
+    default:
+      return state;
+  }
+}
+
 export default function PlayFriend() {
   const { gameId } = useParams();
   const auth = useAuthStore();
   const { refresh: refreshLeaderboard } = useLeaderboardStore();
   const { settings, updateSettings } = useSettingsStore();
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [game, setGame] = useState(null);
-  const [profiles, setProfiles] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [friendMatchState, dispatchFriendMatchState] = useReducer(friendMatchStateReducer, initialFriendMatchState);
   const chess = useChess(undefined, { autoQueen: settings.autoQueen });
   const gameRef = useRef(null);
   const skipNextPersistRef = useRef(false);
   const lastPersistKeyRef = useRef('');
   const applyingRankRef = useRef(false);
 
-  const userId = auth.user?.id;
+  const userId = auth.isOnlineAccount ? auth.user?.id : null;
   const playerColor = useMemo(() => {
     if (!game || !userId) return null;
     if (game.white_user_id === userId) return WHITE;
@@ -80,7 +101,7 @@ export default function PlayFriend() {
   );
 
   const refreshGame = useCallback(async () => {
-    if (!gameId || !isSupabaseConfigured) {
+    if (!gameId || !isSupabaseConfigured || !auth.isOnlineAccount) {
       setLoading(false);
       return;
     }
@@ -90,21 +111,21 @@ export default function PlayFriend() {
     if (error) toast.error(error.message);
     else applyGameRow(data);
     setLoading(false);
-  }, [applyGameRow, gameId]);
+  }, [applyGameRow, auth.isOnlineAccount, gameId]);
 
   useEffect(() => {
     refreshGame();
   }, [refreshGame]);
 
   useEffect(() => {
-    if (!gameId || !isSupabaseConfigured) return undefined;
+    if (!gameId || !isSupabaseConfigured || !auth.isOnlineAccount) return undefined;
     const subscription = subscribeToGame(gameId, (payload) => {
       if (payload.table === 'games' && payload.new) {
         applyGameRow(payload.new);
       }
     });
     return () => subscription.unsubscribe();
-  }, [applyGameRow, gameId]);
+  }, [applyGameRow, auth.isOnlineAccount, gameId]);
 
   useEffect(() => {
     const ids = [game?.white_user_id, game?.black_user_id].filter(Boolean);
@@ -221,6 +242,20 @@ export default function PlayFriend() {
     );
   }
 
+  if (!auth.isOnlineAccount) {
+    return (
+      <div className="content-grid">
+        <section className="panel auth-panel">
+          <div className="panel-heading">
+            <h1>Friend Match</h1>
+          </div>
+          <p className="muted">Friend matches need a confirmed Supabase login. Logout, then sign in after confirming your email.</p>
+          <Link className="icon-button profile-history-link" to="/challenge-friend">Back to Online Challenges</Link>
+        </section>
+      </div>
+    );
+  }
+
   if (!isSupabaseConfigured || !game) {
     return (
       <div className="content-grid">
@@ -229,7 +264,7 @@ export default function PlayFriend() {
             <h1>Friend Match</h1>
           </div>
           <p className="muted">This friend match is unavailable.</p>
-          <Link className="icon-button profile-history-link" to="/challenge-friend">Back to Challenges</Link>
+          <Link className="icon-button profile-history-link" to="/challenge-friend">Back to Online Challenges</Link>
         </section>
       </div>
     );

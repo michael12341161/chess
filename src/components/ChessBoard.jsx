@@ -1,6 +1,10 @@
 import ChessSquare from './ChessSquare.jsx';
 import { coordsToSquare, squareToCoords } from '../utils/helpers.js';
 
+const EMPTY_MOVES = [];
+const EMPTY_LEGAL_TARGETS = [];
+const EMPTY_ARROWS = [];
+
 function arrowPoint(square, flipped) {
   const coords = squareToCoords(square);
   if (!coords) return null;
@@ -12,7 +16,7 @@ function arrowPoint(square, flipped) {
   };
 }
 
-export default function ChessBoard({ state, selectedSquare, legalTargets = [], selectedMoves = [], onSquareClick, flipped = false, arrows = [] }) {
+export default function ChessBoard({ state, selectedSquare, legalTargets = EMPTY_LEGAL_TARGETS, selectedMoves = EMPTY_MOVES, onSquareClick, flipped = false, arrows = EMPTY_ARROWS }) {
   const rows = flipped ? [7, 6, 5, 4, 3, 2, 1, 0] : [0, 1, 2, 3, 4, 5, 6, 7];
   const cols = flipped ? [7, 6, 5, 4, 3, 2, 1, 0] : [0, 1, 2, 3, 4, 5, 6, 7];
   const captureTargets = new Set(selectedMoves.filter((move) => move.captured).map((move) => move.to));

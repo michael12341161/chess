@@ -1,0 +1,16 @@
+Rule: react-doctor/no-cascading-set-state
+Severity: warning
+Category: Bugs
+Count: 2
+
+3 setState calls in one useEffect redraw your screen each time they run together.
+
+5 setState calls in one useEffect redraw your screen each time they run together.
+
+Suggestion: Combine related updates in `useReducer` so one effect does not redraw the screen once per `setState` call.
+
+Curl with no cache & follow the canonical fix and false positive check recipe before fixing: https://react.doctor/docs/rules/react-doctor/no-cascading-set-state
+
+Files:
+  src/hooks/useAI.js:18
+  src/hooks/useGameAnalysis.js:19

@@ -1,4 +1,4 @@
-import { createContext, createElement, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, createElement, use, useEffect, useMemo, useState } from 'react';
 import { DEFAULT_SETTINGS, STORAGE_KEYS } from '../utils/constants.js';
 import { audioManager } from '../services/audio/AudioManager.js';
 
@@ -34,7 +34,7 @@ export function SettingsProvider({ children }) {
 }
 
 export function useSettingsStore() {
-  const context = useContext(SettingsContext);
+  const context = use(SettingsContext);
   if (!context) throw new Error('useSettingsStore must be used inside SettingsProvider.');
   return context;
 }

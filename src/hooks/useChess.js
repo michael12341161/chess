@@ -6,8 +6,11 @@ import { PIECES } from '../utils/constants.js';
 import { audioManager } from '../services/audio/AudioManager.js';
 
 export function useChess(fen, options = {}) {
-  const engineRef = useRef(new GameEngine(fen));
-  const [state, setState] = useState(engineRef.current.getState());
+  const engineRef = useRef(null);
+  if (!engineRef.current) {
+    engineRef.current = new GameEngine(fen);
+  }
+  const [state, setState] = useState(() => engineRef.current.getState());
   const [selectedSquare, setSelectedSquare] = useState(null);
   const [pendingPromotion, setPendingPromotion] = useState(null);
 

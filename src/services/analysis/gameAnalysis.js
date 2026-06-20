@@ -109,6 +109,60 @@ function buildComment({ classification, lossCp, bestMoveSan, move, moveColor }) 
   return `${side} missed a more accurate continuation.${best}`;
 }
 
+async function analyzeMove(analyzer, move, index, totalMoves, onProgress) {
+  const beforeFen = move.beforeFen;
+  const afterFen = move.fen;
+  const moveColor = move.piece?.color ?? fenTurn(beforeFen);
+  const moveNumber = move.moveNumber ?? Math.floor(index / 2) + 1;
+
+  const [before, after] = await Promise.all([
+    analyzer.analyzeFen(beforeFen),
+    analyzer.analyzeFen(afterFen),
+  ]);
+
+  const bestScoreForMover = before.scoreCp;
+  const actualScoreForMover = -after.scoreCp;
+  const lossCp = Math.max(0, Math.round(bestScoreForMover - actualScoreForMover));
+  const classification = classifyLoss(lossCp);
+  const bestDetails = bestMoveDetails(beforeFen, before.bestMove);
+  const scoreCpForWhite = toWhiteScore(after.scoreCp, afterFen);
+  const currentMoveUci = moveToUci(move);
+  const missedOpportunity = Boolean(bestDetails.bestMoveUci && bestDetails.bestMoveUci !== currentMoveUci && lossCp >= 60);
+  const analyzedMove = {
+    ply: index + 1,
+    moveNumber,
+    color: moveColor,
+    san: moveLabel(move),
+    uci: currentMoveUci,
+    phase: phaseForMove(moveNumber),
+    classification,
+    lossCp,
+    evaluationCp: Math.round(scoreCpForWhite),
+    winningChance: winningChance(scoreCpForWhite),
+    bestMove: bestDetails.bestMoveSan,
+    bestMoveUci: bestDetails.bestMoveUci,
+    pv: before.pv?.slice(0, 5) ?? [],
+    missedOpportunity,
+    comment: buildComment({ classification, lossCp, bestMoveSan: bestDetails.bestMoveSan, move, moveColor }),
+  };
+
+  if (onProgress) onProgress({ done: index + 1, total: totalMoves });
+  await new Promise((resolve) => window.setTimeout(resolve, 0));
+  return analyzedMove;
+}
+
+async function analyzeMovesSequentially(analyzer, moves, onProgress) {
+  const totalMoves = moves.length;
+
+  async function analyzeNext(index) {
+    if (index >= totalMoves) return [];
+    const nextMove = await analyzeMove(analyzer, moves[index], index, totalMoves, onProgress);
+    return [nextMove, ...(await analyzeNext(index + 1))];
+  }
+
+  return analyzeNext(0);
+}
+
 function createSideSummary(moves, color) {
   const sideMoves = moves.filter((move) => move.color === color);
   const totalLoss = sideMoves.reduce((sum, move) => sum + move.lossCp, 0);
@@ -153,48 +207,7 @@ export async function analyzeCompletedGame(state, options = {}) {
   const startedAt = performance.now();
 
   try {
-    const analyzedMoves = [];
-
-    for (let index = 0; index < moves.length; index += 1) {
-      const move = moves[index];
-      const beforeFen = move.beforeFen;
-      const afterFen = move.fen;
-      const moveColor = move.piece?.color ?? fenTurn(beforeFen);
-      const moveNumber = move.moveNumber ?? Math.floor(index / 2) + 1;
-
-      const before = await analyzer.analyzeFen(beforeFen);
-      const after = await analyzer.analyzeFen(afterFen);
-
-      const bestScoreForMover = before.scoreCp;
-      const actualScoreForMover = -after.scoreCp;
-      const lossCp = Math.max(0, Math.round(bestScoreForMover - actualScoreForMover));
-      const classification = classifyLoss(lossCp);
-      const bestDetails = bestMoveDetails(beforeFen, before.bestMove);
-      const scoreCpForWhite = toWhiteScore(after.scoreCp, afterFen);
-      const currentMoveUci = moveToUci(move);
-      const missedOpportunity = Boolean(bestDetails.bestMoveUci && bestDetails.bestMoveUci !== currentMoveUci && lossCp >= 60);
-
-      analyzedMoves.push({
-        ply: index + 1,
-        moveNumber,
-        color: moveColor,
-        san: moveLabel(move),
-        uci: currentMoveUci,
-        phase: phaseForMove(moveNumber),
-        classification,
-        lossCp,
-        evaluationCp: Math.round(scoreCpForWhite),
-        winningChance: winningChance(scoreCpForWhite),
-        bestMove: bestDetails.bestMoveSan,
-        bestMoveUci: bestDetails.bestMoveUci,
-        pv: before.pv?.slice(0, 5) ?? [],
-        missedOpportunity,
-        comment: buildComment({ classification, lossCp, bestMoveSan: bestDetails.bestMoveSan, move, moveColor }),
-      });
-
-      if (options.onProgress) options.onProgress({ done: index + 1, total: moves.length });
-      await new Promise((resolve) => window.setTimeout(resolve, 0));
-    }
+    const analyzedMoves = await analyzeMovesSequentially(analyzer, moves, options.onProgress);
 
     const counts = analyzedMoves.reduce(
       (acc, move) => {

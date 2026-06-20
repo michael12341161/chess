@@ -6,8 +6,8 @@ export default function SettingsModal({ open, onClose }) {
   if (!open) return null;
 
   return (
-    <div className="modal-backdrop" role="presentation">
-      <div className="modal settings-modal" role="dialog" aria-modal="true" aria-label="Settings">
+    <dialog open className="modal-backdrop" aria-label="Settings">
+      <div className="modal settings-modal">
         <div className="modal-title">
           <h2>Settings</h2>
           <button type="button" className="square-icon-button" onClick={onClose} title="Close">
@@ -63,6 +63,6 @@ export default function SettingsModal({ open, onClose }) {
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }

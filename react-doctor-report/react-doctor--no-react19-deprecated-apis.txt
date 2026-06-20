@@ -1,0 +1,15 @@
+Rule: react-doctor/no-react19-deprecated-apis
+Severity: warning
+Category: Maintainability
+Count: 3
+
+useContext is replaced by `use()` in React 19, which reads context inside ifs & loops too, so switch to `import { use } from 'react'`.
+
+Suggestion: Pass `ref` as a normal prop on function components, since `forwardRef` isn't needed in React 19. Replace `useContext(X)` with `use(X)`. Only runs on React 19+ projects.
+
+Curl with no cache & follow the canonical fix and false positive check recipe before fixing: https://react.doctor/docs/rules/react-doctor/no-react19-deprecated-apis
+
+Files:
+  src/store/authStore.js:1
+  src/store/leaderboardStore.js:1
+  src/store/settingsStore.js:1

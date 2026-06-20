@@ -1,0 +1,13 @@
+Rule: react-doctor/rerender-lazy-ref-init
+Severity: warning
+Category: Performance
+Count: 1
+
+useRef(new GameEngine()) rebuilds this value on every render & throws it away.
+
+Suggestion: Initialize the ref lazily so expensive values are not rebuilt and discarded on every render.
+
+Curl with no cache & follow the canonical fix and false positive check recipe before fixing: https://react.doctor/docs/rules/react-doctor/rerender-lazy-ref-init
+
+Files:
+  src/hooks/useChess.js:9

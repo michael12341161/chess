@@ -6,7 +6,8 @@
     "dev": "react-scripts start",
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "doctor": "npx react-doctor@latest"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.1",
